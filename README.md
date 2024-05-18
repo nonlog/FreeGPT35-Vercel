@@ -1,122 +1,49 @@
-## Vercel一键部署
+简体中文 / [English](./README_en.md)
 
-<a href="https://vercel.com/import/project?template=https://github.com/cliouo/FreeGPT35-Vercel" target="_blank" rel="noopener noreferrer"><img loading="lazy" src="https://vercel.com/button" alt="Deploy to Vercel" ></a>
+[Vercel免费版升级为60s](https://vercel.com/changelog/vercel-functions-for-hobby-can-now-run-up-to-60-seconds)
 
-**绑定自定义域名解决Vercel域名被阻断问题**
+#### 依然存在的问题
+- 超过60s之后会断流。(因为Vercel免费版持续时间最大值60秒，因此使用沉浸式翻译记得降低`最大文本长度`到600左右，并发30)。
+#### 解决办法:
+Vercel Pro 计划 超时上限为300s，并且自带cron计划任务[跳转Pro部署介绍](#3-vercel-pro-计划的尊贵用户移除请求最大持续时间10s上限)
+
+
+---------------------
+## Vercel一键部署按钮 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcliouo%2FFreeGPT35-Vercel&skippable-integrations=1)
+
+暂时不需要数据库和定时任务，可以一键部署了
 
 --------------------
 
-## 以下为原项目文档:
+## 部署项目 数据库和定时任务暂时不需要了，后面再想吧
+#### 以下均建议绑定自定义域名解决Vercel域名被阻断问题
+### 方式一: fork仓库部署 [Vercel](https://vercel.com/) 
+1. fork 本仓库，fork时，取消勾选 `Copy the main branch only`
+2. 进入Vercel，导入您fork的仓库
+3. 点击`Deploy`，等待部署完成
+4. (可选) 在`Settings`的`Domains`下绑定你自己的域名。
+转到顶部`Deployments`选项卡，`Redeploy`重新部署你的项目
+5.  完成! 鼓掌
 
-[![Docker Pulls][1]](https://hub.docker.com/r/missuo/freegpt35)
+--------------------
 
-[1]: https://img.shields.io/docker/pulls/missuo/freegpt35?logo=docker
+### 方式二: `Vercel Pro` 计划的尊贵用户，移除请求最大持续时间10s上限，自带cron定时任务
+1. 前几步部署和上述相同
+2. 只需在最后`Redeploy`重新部署前，到`Settings`下的`Git`页面，在`Production Branch`填入`vercel-pro`点击`Save`
+![guide](./img/guide.png)
+3. 然后转到顶部`Deployments`选项卡，注意不要在下面已经部署的记录里选!!!，点击如图右上角的三个点 `Create Deployment`选择`vercel-pro`然后`Create Deployment`
+![deploy](./img/6deploy.png)
+4. 完成! 鼓掌
 
-Utilize the unlimited free **GPT-3.5-Turbo** API service provided by the login-free ChatGPT Web.
+--------------------
 
+## 请求示例
 
-> [!IMPORTANT]  
-> **If you are unable to use this project normally, it is most likely due to issues with your IP. Your IP has triggered Cloudflare's shield, or has already been banned. Please try to change your IP or switch servers on your own. 如果您无法正常使用此项目，很可能是由于您的 IP 存在问题。您的 IP 已触发了 Cloudflare 的盾，或已被 ban 掉。请尝试自行更改您的 IP 或切换服务器。**
-
-## Please READ the following content carefully!
-- Please do not use the IP provided by proxy providers, otherwise you probably won't be able to use it. 请不要使用机场的 IP，不然你大概率无法使用。
-- Do not make frequent requests, such as using **immersive translate**. 不要频繁请求，例如使用沉浸式翻译。
-- Recommended to use US home broadband IP, you are very likely to succeed. 推荐使用美国家宽IP，你很大可能可以成功。
-- Don't share and abuse your API. 不要共享和滥用你的 API。
-
-## Deploy
-
-### Node
-
-```bash
-npm install
-node app.js
-```
-### Docker
+**如果你没有设置`AUTH_TOKEN`，你可以不传递`Authorization`，也可以随意传递任何字符串。**
 
 ```bash
-docker run -p 3040:3040 ghcr.io/missuo/freegpt35
-```
-
-```bash
-docker run -p 3040:3040 missuo/freegpt35
-```
-
-### Docker Compose
-
-#### Only FreeGPT35 Service
-
-```bash
-mkdir freegpt35 && cd freegpt35
-wget -O compose.yaml https://raw.githubusercontent.com/missuo/FreeGPT35/main/compose.yaml
-docker compose up -d
-```
-
-#### FreeGPT35 Service with [ChatGPT-Next-Web](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web):
-
-```bash
-mkdir freegpt35 && cd freegpt35
-wget -O compose.yaml https://raw.githubusercontent.com/missuo/FreeGPT35/main/compose_with_next_chat.yaml
-docker compose up -d
-```
-
-### Nginx Reverse Proxy
-
-```nginx
-location ^~ / {
-        proxy_pass http://127.0.0.1:3040; 
-        proxy_set_header Host $host; 
-        proxy_set_header X-Real-IP $remote_addr; 
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; 
-        proxy_set_header REMOTE-HOST $remote_addr; 
-        proxy_set_header Upgrade $http_upgrade; 
-        proxy_set_header Connection "upgrade"; 
-        proxy_http_version 1.1; 
-        add_header Cache-Control no-cache; 
-        proxy_cache off;
-        proxy_buffering off;
-        chunked_transfer_encoding on;
-        tcp_nopush on;
-        tcp_nodelay on;
-        keepalive_timeout 300;
-    }
-```
-
-### Nginx Reverse Proxy with Load Balancer
-
-```nginx
-upstream freegpt35 {
-        server 1.1.1.1:3040;
-        server 2.2.2.2:3040;
-}
-
-location ^~ / {
-        proxy_pass http://freegpt35; 
-        proxy_set_header Host $host; 
-        proxy_set_header X-Real-IP $remote_addr; 
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; 
-        proxy_set_header REMOTE-HOST $remote_addr; 
-        proxy_set_header Upgrade $http_upgrade; 
-        proxy_set_header Connection "upgrade"; 
-        proxy_http_version 1.1; 
-        add_header Cache-Control no-cache; 
-        proxy_cache off;
-        proxy_buffering off;
-        chunked_transfer_encoding on;
-        tcp_nopush on;
-        tcp_nodelay on;
-        keepalive_timeout 300;
-    }
-```
-
-After deployment, you can directly access `http://[IP]:3040/v1/chat/completions` to use the API. Or use `http://[IP]:3000` to directly use **ChatGPT-Next-Web**.
-
-## Request Example
-
-**You don't have to pass Authorization, of course, you can also pass any string randomly.**
-
-```bash
-curl http://127.0.0.1:3040/v1/chat/completions \
+curl https://[Your Vercel Domain]/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer any_string_you_like" \
   -d '{
@@ -130,17 +57,27 @@ curl http://127.0.0.1:3040/v1/chat/completions \
     "stream": true
     }'
 ```
+## 高级设置
+### 环境变量 (如果你不知道是干嘛的，请不要随意设置)
 
-## Compatibility
+| Key                       | 示例值                         | 解释                                          | 要求  |
+|---------------------------|-------------------------------|-----------------------------------------------|-------|
+| `AUTH_TOKEN`              | myapikey                     | 你为自己接口设置的apikey。                      | 可选  |
 
-You can use it in any app, such as OpenCat, Next-Chat, Lobe-Chat, Bob, etc. Feel free to fill in an **API Key** with any string, for example, `gptyyds`.
+
+## 兼容性
+
+您可以在任何客户端中使用它，如 `OpenCat`、`Next-Chat`、`Lobe-Chat`、`Bob` 等。在**API Key**中随意填写任何字符串或者你设置了`AUTH_TOKEN`，就填写它。
 
 ### Bob
 ![Bob](./img/bob.png)
 
 ## Credits
-- Forked From: [https://github.com/skzhengkai/free-chatgpt-api](https://github.com/skzhengkai/free-chatgpt-api)
+- Forked From: [https://github.com/missuo/FreeGPT35](https://github.com/missuo/FreeGPT35)
+- Higher Upstream: [https://github.com/skzhengkai/free-chatgpt-api](https://github.com/skzhengkai/free-chatgpt-api)
 - Original Author: [https://github.com/PawanOsman/ChatGPT](https://github.com/PawanOsman/ChatGPT)
+## Similar Project
 
+- [aurora](https://github.com/aurora-develop/aurora): Golang development, support for multiple deployment methods
 ## License
-MIT License
+AGPL 3.0 License
